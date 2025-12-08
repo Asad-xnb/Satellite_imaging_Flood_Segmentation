@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Segmentation Results - Flood Analysis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Design tokens for clean, professional look */
+    :root {
+      --color-background: #f8fafc;
+      --color-foreground: #0f172a;
+      --color-card: #ffffff;
+      --color-border: #e2e8f0;
+      --color-muted: #64748b;
+      --color-primary: #0ea5e9;
+      --color-success: #10b981;
+      --color-secondary: #6366f1;
+      --radius: 0.5rem;
+    }
+
+    body {
+      background-color: var(--color-background);
+      color: var(--color-foreground);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .card {
+      background-color: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: #0284c7;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    }
+
+    .btn-secondary {
+      background-color: #f1f5f9;
+      color: var(--color-foreground);
+      border: 1px solid var(--color-border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: #e2e8f0;
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .download-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--color-primary);
+      color: white;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .download-btn:hover {
+      background-color: #0284c7;
+      transform: translateY(-2px);
+    }
+
+    .progress-bar {
+      height: 0.5rem;
+      background-color: var(--color-border);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+      transition: width 0.6s ease;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--color-muted);
+    }
+
+    .breadcrumb a {
+      color: var(--color-primary);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .breadcrumb a:hover {
+      color: #0284c7;
+    }
+
+    .image-container {
+      position: relative;
+      background-color: #f1f5f9;
+      border-radius: var(--radius);
+      overflow: hidden;
+      aspect-ratio: 1;
+    }
+
+    .image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .stat-value {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--color-muted);
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb mb-8">
+      <a href="#home">Home</a>
+      <span>/</span>
+      <a href="#upload">Upload</a>
+      <span>/</span>
+      <span>Results</span>
+    </div>
+
+    <!-- Results Header -->
+    <div class="card p-6 mb-8">
+      <h1 class="text-3xl font-bold mb-2">Segmentation Results</h1>
+      <p class="text-sm text-gray-600">
+        <strong>Filename:</strong> flood_region_2024_01_15.tif
+        <span class="mx-4">•</span>
+        <strong>Processed:</strong> January 15, 2024 at 2:34 PM UTC
+      </p>
+    </div>
+
+    <!-- Three-Column Image Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <!-- Original Image -->
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-gray-200">
+          <h3 class="font-semibold text-gray-900">Original Image</h3>
+        </div>
+        <div class="p-4">
+          <div class="image-container mb-4">
+            <img src="/placeholder.svg?height=400&width=400" alt="Original satellite image">
+          </div>
+          <button class="download-btn mx-auto block" title="Download original image">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Binary Mask -->
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-gray-200">
+          <h3 class="font-semibold text-gray-900">Binary Mask</h3>
+        </div>
+        <div class="p-4">
+          <div class="image-container mb-4 bg-black">
+            <img src="/placeholder.svg?height=400&width=400" alt="Binary flood mask">
+          </div>
+          <button class="download-btn mx-auto block" title="Download binary mask">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Masked Result -->
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-gray-200">
+          <h3 class="font-semibold text-gray-900">Masked Result</h3>
+        </div>
+        <div class="p-4">
+          <div class="image-container mb-4">
+            <img src="/placeholder.svg?height=400&width=400" alt="Masked result with non-flood areas darkened">
+          </div>
+          <button class="download-btn mx-auto block" title="Download masked result">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Card -->
+    <div class="card p-8 mb-8">
+      <h2 class="text-xl font-bold mb-6 text-gray-900">Analysis Statistics</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <!-- Total Pixels -->
+        <div>
+          <div class="stat-value">12,458,240</div>
+          <div class="stat-label">Total Pixels</div>
+        </div>
+
+        <!-- Flood Pixels -->
+        <div>
+          <div class="stat-value">2,849,651</div>
+          <div class="stat-label">Flood Pixels Detected</div>
+        </div>
+
+        <!-- Flood Percentage -->
+        <div>
+          <div class="stat-value">22.9%</div>
+          <div class="stat-label">Flood Area Coverage</div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-semibold text-gray-700">Flood Detection Progress</span>
+          <span class="text-sm text-gray-500">22.9% of image area</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 22.9%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <button class="btn btn-secondary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        </svg>
+        Process Another Image
+      </button>
+
+      <button class="btn btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 19H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 16 16 4 8 4"></polyline>
+          <line x1="9" y1="9" x2="15" y2="9"></line>
+        </svg>
+        Compare with Another
+      </button>
+
+      <button class="btn btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download Results
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Add smooth scroll behavior
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        console.log('[v0] Navigation to:', this.getAttribute('href'));
+      });
+    });
+
+    // Add button interaction feedback
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        console.log('[v0] Button clicked:', this.textContent.trim());
+      });
+    });
+  </script>
+</body>
+</html>

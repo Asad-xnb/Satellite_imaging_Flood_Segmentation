@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flood Segmentation Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        :root {
+            --primary: #0284c7;
+            --primary-light: #0ea5e9;
+            --success: #10b981;
+            --success-light: #34d399;
+            --danger: #ef4444;
+            --danger-light: #f87171;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+        }
+        
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+        }
+        
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            background-color: var(--bg-white);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-zone.drag-over {
+            border-color: var(--primary);
+            background-color: #eff6ff;
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--primary-light);
+        }
+        
+        .thumbnail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .thumbnail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .thumbnail-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .thumbnail-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-light);
+        }
+        
+        .thumbnail-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #f1f5f9;
+        }
+        
+        .button-primary {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .button-primary:hover:not(:disabled) {
+            background-color: #0369a1;
+        }
+        
+        .button-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .button-success {
+            background-color: var(--success);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .button-success:hover:not(:disabled) {
+            background-color: #059669;
+        }
+        
+        .button-success:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .button-danger {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--danger);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .button-danger:hover {
+            background-color: #fee2e2;
+        }
+        
+        .checkbox-input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .cloud-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--primary-light);
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="mb-12">
+                <h1 class="text-4xl font-bold text-slate-900 mb-2">Flood Segmentation Analysis</h1>
+                <p class="text-lg text-slate-600">Upload satellite imagery to automatically detect and analyze flood-affected areas. Our advanced algorithms process multi-temporal satellite images to identify flood extent and changes over time.</p>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="bg-white rounded-lg shadow-sm p-8 mb-8 border border-slate-200">
+                <!-- Upload Zone -->
+                <div class="upload-zone p-12 text-center mb-6" id="uploadZone">
+                    <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
+                    
+                    <svg class="cloud-icon mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3v-6" />
+                    </svg>
+                    
+                    <p class="text-lg font-semibold text-slate-900 mb-2">Drag satellite images here or click to browse</p>
+                    <p class="text-sm text-slate-500">Supported formats: JPEG, PNG, GeoTIFF, TIF</p>
+                </div>
+
+                <!-- Upload Note -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+                    <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd" />
+                    </svg>
+                    <p class="text-sm text-blue-700"><span class="font-semibold">Tip:</span> Upload 2 or more images to compare flood changes across different time periods.</p>
+                </div>
+            </div>
+
+            <!-- Thumbnails Grid -->
+            <div id="thumbnailsContainer" class="hidden mb-8">
+                <h2 class="text-xl font-semibold text-slate-900 mb-4">Uploaded Images</h2>
+                <div class="thumbnail-grid" id="thumbnailGrid"></div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4 justify-center sm:justify-start flex-wrap">
+                <button class="button-primary" id="segmentBtn" disabled>
+                    <span class="inline-flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Segment Selected Images
+                    </span>
+                </button>
+                <button class="button-success" id="compareBtn" disabled>
+                    <span class="inline-flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Compare Selected Images
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const thumbnailsContainer = document.getElementById('thumbnailsContainer');
+        const thumbnailGrid = document.getElementById('thumbnailGrid');
+        const segmentBtn = document.getElementById('segmentBtn');
+        const compareBtn = document.getElementById('compareBtn');
+        
+        let uploadedFiles = [];
+
+        // Upload zone click handler
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop handlers
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (file.type.startsWith('image/')) {
+                    const fileObj = {
+                        id: Date.now() + Math.random(),
+                        file: file,
+                        name: file.name,
+                        uploadDate: new Date(),
+                        selected: false
+                    };
+                    uploadedFiles.push(fileObj);
+                }
+            }
+            
+            renderThumbnails();
+            updateButtonStates();
+        }
+
+        function renderThumbnails() {
+            if (uploadedFiles.length === 0) {
+                thumbnailsContainer.classList.add('hidden');
+                thumbnailGrid.innerHTML = '';
+                return;
+            }
+
+            thumbnailsContainer.classList.remove('hidden');
+            thumbnailGrid.innerHTML = uploadedFiles.map(fileObj => {
+                const reader = new FileReader();
+                const url = URL.createObjectURL(fileObj.file);
+                const uploadTime = fileObj.uploadDate.toLocaleString();
+                const shortDate = fileObj.uploadDate.toLocaleDateString();
+                const shortTime = fileObj.uploadDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                return `
+                    <div class="thumbnail-card">
+                        <img src="${url}" alt="${fileObj.name}" class="thumbnail-image">
+                        <div class="p-4">
+                            <div class="flex items-start justify-between gap-2 mb-2">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-slate-900 truncate">${fileObj.name}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${shortDate} at ${shortTime}</p>
+                                </div>
+                                <button class="button-danger" onclick="removeFile('${fileObj.id}')">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <label class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 -mx-2 -my-1 px-2 py-1 rounded">
+                                <input type="checkbox" class="checkbox-input" onchange="toggleFileSelection('${fileObj.id}')">
+                                <span class="text-sm text-slate-600">Select for analysis</span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removeFile(id) {
+            uploadedFiles = uploadedFiles.filter(f => f.id !== id);
+            renderThumbnails();
+            updateButtonStates();
+        }
+
+        function toggleFileSelection(id) {
+            const file = uploadedFiles.find(f => f.id === id);
+            if (file) {
+                file.selected = !file.selected;
+                updateButtonStates();
+            }
+        }
+
+        function updateButtonStates() {
+            const selectedCount = uploadedFiles.filter(f => f.selected).length;
+            
+            // Segment button: enable if at least 1 selected
+            segmentBtn.disabled = selectedCount < 1;
+            
+            // Compare button: enable if at least 2 selected
+            compareBtn.disabled = selectedCount < 2;
+        }
+
+        // Handle button clicks (demo)
+        segmentBtn.addEventListener('click', () => {
+            const selectedFiles = uploadedFiles.filter(f => f.selected).map(f => f.name).join(', ');
+            alert(`Segmenting: ${selectedFiles}`);
+        });
+
+        compareBtn.addEventListener('click', () => {
+            const selectedFiles = uploadedFiles.filter(f => f.selected).map(f => f.name).join(', ');
+            alert(`Comparing: ${selectedFiles}`);
+        });
+    </script>
+</body>
+</html>

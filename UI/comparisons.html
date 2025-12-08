@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flood Change Analysis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    /* Dramatic color scheme */
+    :root {
+      --color-flood-increase: rgb(239, 68, 68);
+      --color-flood-decrease: rgb(34, 197, 94);
+      --color-neutral-dark: rgb(17, 24, 39);
+      --color-neutral-light: rgb(249, 250, 251);
+      --color-accent-blue: rgb(59, 130, 246);
+      --color-text-primary: rgb(31, 41, 55);
+      --color-text-secondary: rgb(107, 114, 128);
+      --color-border: rgb(229, 231, 235);
+    }
+
+    body {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      color: var(--color-text-primary);
+    }
+
+    .comparison-container {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .divider {
+      width: 2px;
+      background: var(--color-border);
+      position: relative;
+    }
+
+    .divider::before {
+      content: '→';
+      position: absolute;
+      top: 50%;
+      left: -8px;
+      transform: translateY(-50%);
+      background: var(--color-accent-blue);
+      color: white;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .change-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 700;
+      font-size: 2.25rem;
+    }
+
+    .change-badge.increase {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--color-flood-increase);
+    }
+
+    .change-badge.decrease {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--color-flood-decrease);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      color: var(--color-text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .timeline-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--color-accent-blue);
+    }
+
+    .timeline-line {
+      flex: 1;
+      height: 2px;
+      background: var(--color-border);
+      position: relative;
+    }
+
+    .timeline-line::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      right: -8px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--color-accent-blue);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      background: var(--color-accent-blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: rgb(37, 99, 235);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-neutral-light);
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .image-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.75rem;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      padding: 0.5rem 1rem;
+      background: var(--color-neutral-light);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .card {
+      background: white;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--color-border);
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transition: box-shadow 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-container {
+        grid-template-columns: 1fr;
+      }
+
+      .divider {
+        width: 100%;
+        height: 2px;
+        margin: 2rem 0;
+      }
+
+      .divider::before {
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        content: '↓';
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-7xl mx-auto p-4 md:p-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold mb-2">Flood Change Analysis</h1>
+      
+      <!-- Date Range Selector -->
+      <div class="flex flex-col md:flex-row md:items-center gap-4 mt-4">
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-gray-600">Before:</label>
+          <input type="date" value="2024-08-15" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        </div>
+        <span class="hidden md:inline text-gray-400">→</span>
+        <span class="md:hidden text-gray-400">to</span>
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-gray-600">After:</label>
+          <input type="date" value="2024-10-22" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Comparison Section -->
+    <div class="comparison-container mb-8">
+      <!-- Left Side: Before -->
+      <div>
+        <h2 class="text-xl font-bold mb-4">Before Image</h2>
+        <div class="space-y-3">
+          <!-- Original Image -->
+          <div class="card overflow-hidden">
+            <div class="image-label flex justify-between items-center">
+              <span>Original Satellite</span>
+              <button class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="bg-gray-200 h-64 md:h-80 flex items-center justify-center">
+              <img src="/placeholder.svg?height=320&width=400" alt="Before satellite image" class="w-full h-full object-cover">
+            </div>
+          </div>
+
+          <!-- Binary Mask -->
+          <div class="card overflow-hidden">
+            <div class="image-label flex justify-between items-center">
+              <span>Binary Mask</span>
+              <button class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="bg-gray-200 h-64 md:h-80 flex items-center justify-center">
+              <img src="/placeholder.svg?height=320&width=400" alt="Binary mask" class="w-full h-full object-cover">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Statistics Panel -->
+      <div class="divider hidden md:block" style="min-height: 700px;"></div>
+
+      <div class="order-3 md:order-2 w-full md:w-auto">
+        <div class="card bg-gradient-to-br from-slate-50 to-slate-100">
+          <!-- Change Indicator -->
+          <div class="mb-6">
+            <p class="text-sm text-gray-600 mb-2">Flood Area Change</p>
+            <div class="change-badge increase">
+              <span>+150%</span>
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m0 0l4 4m10-4v12m0 0l4-4m0 0l-4-4"></path>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Statistics -->
+          <div class="space-y-4">
+            <div class="stat-row">
+              <span class="stat-label">Before Flood Pixels</span>
+              <span class="stat-value">2,845,120</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">After Flood Pixels</span>
+              <span class="stat-value">7,113,800</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Net Pixel Change</span>
+              <span class="stat-value text-red-600">+4,268,680</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Before Coverage</span>
+              <span class="stat-value">18.2%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">After Coverage</span>
+              <span class="stat-value">45.5%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Side: After -->
+      <div class="order-2 md:order-3">
+        <h2 class="text-xl font-bold mb-4">After Image</h2>
+        <div class="space-y-3">
+          <!-- Original Image -->
+          <div class="card overflow-hidden">
+            <div class="image-label flex justify-between items-center">
+              <span>Original Satellite</span>
+              <button class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="bg-gray-200 h-64 md:h-80 flex items-center justify-center">
+              <img src="/placeholder.svg?height=320&width=400" alt="After satellite image" class="w-full h-full object-cover">
+            </div>
+          </div>
+
+          <!-- Binary Mask -->
+          <div class="card overflow-hidden">
+            <div class="image-label flex justify-between items-center">
+              <span>Binary Mask</span>
+              <button class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="bg-gray-200 h-64 md:h-80 flex items-center justify-center">
+              <img src="/placeholder.svg?height=320&width=400" alt="Binary mask after" class="w-full h-full object-cover">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="card mb-8">
+      <h3 class="text-lg font-bold mb-4">Flood Area Comparison</h3>
+      <div class="h-80">
+        <canvas id="comparisonChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Timeline Visualization -->
+    <div class="card mb-8">
+      <h3 class="text-lg font-bold mb-6">Analysis Timeline</h3>
+      <div class="space-y-4">
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div>
+            <p class="font-medium">Before Analysis</p>
+            <p class="text-sm text-gray-600">August 15, 2024 - 2,845,120 flood pixels detected</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="w-12 flex justify-center">
+            <div class="timeline-line"></div>
+          </div>
+          <div class="text-center text-sm text-gray-600">67 days elapsed</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div>
+            <p class="font-medium">After Analysis</p>
+            <p class="text-sm text-gray-600">October 22, 2024 - 7,113,800 flood pixels detected</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col md:flex-row gap-4 justify-center md:justify-start">
+      <button class="btn btn-primary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Download Report (PDF)
+      </button>
+      <button class="btn btn-secondary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg>
+        Download Images
+      </button>
+      <button class="btn btn-secondary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C9.839 15.859 11.914 17.5 14.5 17.5c.83 0 1.624-.126 2.368-.382l2.552 2.552a1 1 0 001.414-1.414l-9.868-9.868a6 6 0 00-8.632 8.632zM12.5 10a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"></path>
+        </svg>
+        Share Results
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Chart.js configuration for flood area comparison
+    const ctx = document.getElementById('comparisonChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Before', 'After'],
+        datasets: [{
+          label: 'Flood Area (millions of pixels)',
+          data: [2.845, 7.114],
+          backgroundColor: ['rgb(34, 197, 94)', 'rgb(239, 68, 68)'],
+          borderColor: ['rgba(34, 197, 94, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+          borderWidth: 2,
+          borderRadius: 8,
+          hoverBackgroundColor: ['rgb(22, 163, 74)', 'rgb(220, 38, 38)'],
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 8,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)',
+            },
+            ticks: {
+              callback: function(value) {
+                return value.toFixed(1) + 'M';
+              }
+            }
+          },
+          x: {
+            grid: {
+              display: false,
+            },
+          },
+        },
+      },
+    });
+  </script>
+</body>
+</html>
