@@ -9,6 +9,7 @@ const Image = require('../models/Image');
 router.post('/upload', upload.single('image'), imageController.uploadImage);
 router.post('/segment/:imageId', imageController.segmentImage);
 router.get('/segmentation/:segmentationId', imageController.getSegmentation);
+router.get('/:imageId/segmentation', imageController.getImageSegmentation);
 router.get('/history', imageController.getHistory);
 
 // Serve segmented images

@@ -3,175 +3,232 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flood Change Analysis</title>
+  <title>Water Comparison Analysis</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
   <%- include('partials/navbar') %>
 
-<div class="max-w-6xl mx-auto px-4 py-12">
-  <h1 class="text-3xl font-bold text-gray-900 mb-8">Flood Change Analysis</h1>
+<div class="max-w-7xl mx-auto px-4 py-12">
+  <h1 class="text-4xl font-bold text-gray-900 mb-2">Water Comparison Analysis</h1>
+  <p class="text-gray-600 mb-8">Detailed segmentation and change analysis</p>
 
-  <!-- Date Range Selector -->
-  <div class="bg-white rounded-lg shadow p-6 mb-8">
-    <div class="grid md:grid-cols-2 gap-4 mb-6">
+  <!-- Back Button -->
+  <a href="/upload" class="inline-block mb-6 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+    ← Back to Gallery
+  </a>
+
+  <!-- Before Section -->
+  <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 bg-blue-50 p-6">Before Image Analysis</h2>
+    
+    <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Before Image</label>
-        <select id="preImage" class="w-full border border-gray-300 rounded-lg p-2">
-          <option value="">Select before image...</option>
-        </select>
+        <p class="text-sm font-semibold text-gray-700 mb-2">Original Satellite Image</p>
+        <img id="preOriginal" class="w-full h-64 object-cover rounded-lg bg-gray-100" onerror="this.style.backgroundColor='#e5e7eb'" />
       </div>
+      
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">After Image</label>
-        <select id="postImage" class="w-full border border-gray-300 rounded-lg p-2">
-          <option value="">Select after image...</option>
-        </select>
+        <p class="text-sm font-semibold text-gray-700 mb-2">Binary Water Mask</p>
+        <img id="preMask" class="w-full h-64 object-cover rounded-lg bg-gray-100" onerror="this.style.backgroundColor='#e5e7eb'" />
+      </div>
+      
+      <div>
+        <p class="text-sm font-semibold text-gray-700 mb-2">Segmented Overlay</p>
+        <img id="preMasked" class="w-full h-64 object-cover rounded-lg bg-gray-100" onerror="this.style.backgroundColor='#e5e7eb'" />
       </div>
     </div>
-    <button class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
-      Compare Images
-    </button>
-  </div>
 
-  <!-- Comparison Results -->
-  <div class="grid md:grid-cols-3 gap-6 mb-8">
-    <!-- Before -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <img id="beforeImage" src="/placeholder.jpg" class="w-full h-64 object-cover bg-gray-100" />
-      <div class="p-4">
-        <h3 class="font-semibold text-gray-900">Before</h3>
-        <div class="mt-3 space-y-2">
-          <p class="text-sm text-gray-600">Flood Pixels: <span id="beforePixels" class="font-semibold">-</span></p>
-          <p class="text-sm text-gray-600">Coverage: <span id="beforeCoverage" class="font-semibold">-</span>%</p>
+    <!-- Before Statistics -->
+    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 border-t">
+      <h3 class="text-lg font-bold text-gray-900 mb-4">Before Statistics</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded p-4 shadow-sm">
+          <p class="text-xs text-gray-600 uppercase tracking-wide">Total Pixels</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1" id="preTotalPixels">-</p>
+        </div>
+        <div class="bg-white rounded p-4 shadow-sm">
+          <p class="text-xs text-gray-600 uppercase tracking-wide">Water Pixels</p>
+          <p class="text-2xl font-bold text-blue-600 mt-1" id="preFloodPixels">-</p>
+        </div>
+        <div class="bg-white rounded p-4 shadow-sm">
+          <p class="text-xs text-gray-600 uppercase tracking-wide">Water Coverage</p>
+          <p class="text-2xl font-bold text-blue-700 mt-1" id="preFloodPercent">-</p>
+        </div>
+        <div class="bg-white rounded p-4 shadow-sm">
+          <p class="text-xs text-gray-600 uppercase tracking-wide">Processing Time</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1" id="preProcessingTime">-</p>
         </div>
       </div>
-    </div>
-
-    <!-- Statistics Center -->
-    <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg shadow p-6 flex flex-col justify-center items-center">
-      <p class="text-sm text-gray-600 mb-4">Flood Change</p>
-      <p id="changePercentage" class="text-6xl font-bold text-red-600 mb-2">+150%</p>
-      <p id="changeInterpretation" class="text-center text-gray-700 text-sm">Water increased by 150%</p>
-      <div class="mt-6 flex items-center gap-2">
-        <svg id="changeIcon" class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m0 0l4 4m10-4v12m0 0l4-4m0 0l-4-4"></path>
-        </svg>
-      </div>
-    </div>
-
-    <!-- After -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <img id="afterImage" src="/placeholder.jpg" class="w-full h-64 object-cover bg-gray-100" />
-      <div class="p-4">
-        <h3 class="font-semibold text-gray-900">After</h3>
-        <div class="mt-3 space-y-2">
-          <p class="text-sm text-gray-600">Flood Pixels: <span id="afterPixels" class="font-semibold">-</span></p>
-          <p class="text-sm text-gray-600">Coverage: <span id="afterCoverage" class="font-semibold">-</span>%</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Chart/Statistics -->
-  <div class="bg-white rounded-lg shadow p-6 mb-8">
-    <h2 class="text-xl font-bold text-gray-900 mb-4">Detailed Comparison</h2>
-    <div class="space-y-4">
-      <div>
-        <p class="text-sm text-gray-600 mb-2">Before Image Coverage</p>
-        <div class="w-full bg-gray-200 rounded-full h-3">
-          <div id="beforeBar" class="bg-blue-600 h-3 rounded-full" style="width: 0%"></div>
-        </div>
-      </div>
-      <div>
-        <p class="text-sm text-gray-600 mb-2">After Image Coverage</p>
-        <div class="w-full bg-gray-200 rounded-full h-3">
-          <div id="afterBar" class="bg-red-600 h-3 rounded-full" style="width: 0%"></div>
+      <div class="mt-4">
+        <p class="text-sm text-gray-600 mb-2">Water Coverage Bar</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div id="preBar" class="bg-blue-600 h-4 rounded-full" style="width: 0%"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Export Buttons -->
-  <div class="flex gap-4 justify-center">
-    <button onclick="downloadReport()" class="px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
-      Download Report (PDF)
-    </button>
-    <button onclick="downloadImages()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
-      Download Images
-    </button>
-    <button onclick="shareResults()" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
-      Share Results
-    </button>
+  <!-- Change Analysis -->
+  <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-lg shadow-lg p-8 mb-8 border-l-4 border-orange-500">
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">Water Change Analysis</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="text-center">
+        <p class="text-sm text-gray-600 uppercase tracking-wide mb-2">Change in Pixels</p>
+        <p class="text-3xl font-bold text-orange-600" id="changePixels">-</p>
+      </div>
+      <div class="text-center">
+        <p class="text-sm text-gray-600 uppercase tracking-wide mb-2">Change Percentage</p>
+        <p class="text-4xl font-bold text-red-600" id="changePercent">-</p>
+      </div>
+      <div class="text-center">
+        <p class="text-sm text-gray-600 uppercase tracking-wide mb-2">Interpretation</p>
+        <p class="text-lg font-semibold text-gray-900 mt-2" id="interpretation">-</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- After Section -->
+  <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+    <h2 class="text-2xl font-bold text-gray-900 bg-red-50 p-6">After Image Analysis</h2>
+    
+    <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div>
+        <p class="text-sm font-semibold text-gray-700 mb-2">Original Satellite Image</p>
+        <img id="postOriginal" class="w-full h-64 object-cover rounded-lg bg-gray-100" onerror="this.style.backgroundColor='#e5e7eb'" />
+      </div>
+      
+      <div>
+        <p class="text-sm font-semibold text-gray-700 mb-2">Binary Water Mask</p>
+        <img id="postMask" class="w-full h-64 object-cover rounded-lg bg-gray-100" onerror="this.style.backgroundColor='#e5e7eb'" />
+      </div>
+      
+      <div>
+        <p class="text-sm font-semibold text-gray-700 mb-2">Segmented Overlay</p>
+        <img id="postMasked" class="w-full h-64 object-cover rounded-lg bg-gray-100" onerror="this.style.backgroundColor='#e5e7eb'" />
+      </div>
+    </div>
+
+    <!-- After Statistics -->
+    <div class="bg-gradient-to-r from-red-50 to-orange-50 p-6 border-t">
+      <h3 class="text-lg font-bold text-gray-900 mb-4">After Statistics</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded p-4 shadow-sm">
+          <p class="text-xs text-gray-600 uppercase tracking-wide">Total Pixels</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1" id="postTotalPixels">-</p>
+        </div>
+        <div class="bg-white rounded p-4 shadow-sm">
+          <p class="text-xs text-gray-600 uppercase tracking-wide">Water Pixels</p>
+          <p class="text-2xl font-bold text-red-600 mt-1" id="postFloodPixels">-</p>
+        </div>
+        <div class="bg-white rounded p-4 shadow-sm">
+          <p class="text-xs text-gray-600 uppercase tracking-wide">Water Coverage</p>
+          <p class="text-2xl font-bold text-red-700 mt-1" id="postFloodPercent">-</p>
+        </div>
+        <div class="bg-white rounded p-4 shadow-sm">
+          <p class="text-xs text-gray-600 uppercase tracking-wide">Processing Time</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1" id="postProcessingTime">-</p>
+        </div>
+      </div>
+      <div class="mt-4">
+        <p class="text-sm text-gray-600 mb-2">Water Coverage Bar</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div id="postBar" class="bg-red-600 h-4 rounded-full" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back Button -->
+  <div class="text-center mt-12">
+    <a href="/upload" class="inline-block px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+      ← Back to Gallery
+    </a>
   </div>
 </div>
 
 <script>
-  const comparisonId = new URLSearchParams(window.location.search).get('comparisonId');
+  const preImageId = new URLSearchParams(window.location.search).get('preImageId');
+  const postImageId = new URLSearchParams(window.location.search).get('postImageId');
 
-  if (comparisonId) {
-    fetch(`/api/comparisons/comparison/${comparisonId}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.data) {
-          const comp = data.data;
-          
-          // Update statistics
-          document.getElementById('beforePixels').textContent = comp.preFloodPixels.toLocaleString();
-          const beforeCoverage = (comp.preFloodPixels / (comp.preFloodPixels + comp.postFloodPixels + 1)) * 100;
-          document.getElementById('beforeCoverage').textContent = beforeCoverage.toFixed(2);
-          
-          document.getElementById('afterPixels').textContent = comp.postFloodPixels.toLocaleString();
-          const afterCoverage = (comp.postFloodPixels / (comp.preFloodPixels + comp.postFloodPixels + 1)) * 100;
-          document.getElementById('afterCoverage').textContent = afterCoverage.toFixed(2);
-          
-          document.getElementById('changePercentage').textContent = comp.floodChangePercentage.toFixed(2) + '%';
-          document.getElementById('changeInterpretation').textContent = 
-            comp.floodChangePercentage > 0 
-              ? `Water increased by ${Math.abs(comp.floodChangePercentage).toFixed(2)}%`
-              : `Water decreased by ${Math.abs(comp.floodChangePercentage).toFixed(2)}%`;
-          
-          // Update icon color
-          const icon = document.getElementById('changeIcon');
-          if (comp.floodChangePercentage > 0) {
-            icon.classList.remove('text-green-600');
-            icon.classList.add('text-red-600');
-          } else {
-            icon.classList.remove('text-red-600');
-            icon.classList.add('text-green-600');
-          }
-          
-          // Update progress bars
-          const beforePercent = (comp.preFloodPixels / (comp.preFloodPixels + comp.postFloodPixels + 1)) * 100;
-          const afterPercent = (comp.postFloodPixels / (comp.preFloodPixels + comp.postFloodPixels + 1)) * 100;
-          document.getElementById('beforeBar').style.width = Math.min(beforePercent, 100) + '%';
-          document.getElementById('afterBar').style.width = Math.min(afterPercent, 100) + '%';
-          
-          // Load images
-          const preImageId = comp.preImageId._id;
-          const postImageId = comp.postImageId._id;
-          document.getElementById('beforeImage').src = `/api/images/masked/${preImageId}`;
-          document.getElementById('afterImage').src = `/api/images/masked/${postImageId}`;
+  let preData = null;
+  let postData = null;
+
+  async function loadData() {
+    try {
+      // Fetch segmentation data for both images
+      const preResponse = await fetch(`/api/images/${preImageId}/segmentation`);
+      const preJson = await preResponse.json();
+      
+      const postResponse = await fetch(`/api/images/${postImageId}/segmentation`);
+      const postJson = await postResponse.json();
+
+      if (preJson.success && preJson.data) {
+        preData = preJson.data;
+      }
+      if (postJson.success && postJson.data) {
+        postData = postJson.data;
+      }
+
+      // Set image sources
+      document.getElementById('preOriginal').src = `/api/images/original/${preImageId}`;
+      document.getElementById('preMask').src = `/api/images/mask/${preImageId}`;
+      document.getElementById('preMasked').src = `/api/images/masked/${preImageId}`;
+
+      document.getElementById('postOriginal').src = `/api/images/original/${postImageId}`;
+      document.getElementById('postMask').src = `/api/images/mask/${postImageId}`;
+      document.getElementById('postMasked').src = `/api/images/masked/${postImageId}`;
+
+      // Display before statistics
+      if (preData) {
+        document.getElementById('preTotalPixels').textContent = preData.totalPixels.toLocaleString();
+        document.getElementById('preFloodPixels').textContent = preData.floodPixels.toLocaleString();
+        document.getElementById('preFloodPercent').textContent = preData.floodPercentage.toFixed(2) + '%';
+        document.getElementById('preProcessingTime').textContent = preData.processingTime + 'ms';
+        document.getElementById('preBar').style.width = preData.floodPercentage + '%';
+      }
+
+      // Display after statistics
+      if (postData) {
+        document.getElementById('postTotalPixels').textContent = postData.totalPixels.toLocaleString();
+        document.getElementById('postFloodPixels').textContent = postData.floodPixels.toLocaleString();
+        document.getElementById('postFloodPercent').textContent = postData.floodPercentage.toFixed(2) + '%';
+        document.getElementById('postProcessingTime').textContent = postData.processingTime + 'ms';
+        document.getElementById('postBar').style.width = postData.floodPercentage + '%';
+      }
+
+      // Calculate change
+      if (preData && postData) {
+        const changePixels = postData.floodPixels - preData.floodPixels;
+        const changePercent = ((postData.floodPixels - preData.floodPixels) / preData.floodPixels) * 100;
+        const preWaterPercent = preData.floodPercentage;
+        const postWaterPercent = postData.floodPercentage;
+        const waterIncrease = postWaterPercent - preWaterPercent;
+        
+        document.getElementById('changePixels').textContent = (changePixels > 0 ? '+' : '') + changePixels.toLocaleString();
+        document.getElementById('changePercent').textContent = (waterIncrease > 0 ? '+' : '') + waterIncrease.toFixed(2) + '% water';
+        
+        let interpretation = '';
+        if (waterIncrease > 5) {
+          interpretation = `Water coverage increased by ${waterIncrease.toFixed(2)}% (${changePercent.toFixed(1)}% more flood pixels)`;
+        } else if (waterIncrease > 0) {
+          interpretation = `Water coverage increased by ${waterIncrease.toFixed(2)}%`;
+        } else if (waterIncrease < -5) {
+          interpretation = `Water coverage decreased by ${Math.abs(waterIncrease).toFixed(2)}% (${Math.abs(changePercent).toFixed(1)}% fewer flood pixels)`;
+        } else if (waterIncrease < 0) {
+          interpretation = `Water coverage decreased by ${Math.abs(waterIncrease).toFixed(2)}%`;
+        } else {
+          interpretation = 'No significant water level change';
         }
-      })
-      .catch(err => {
-        console.error('Error loading comparison:', err);
-        alert('Error loading comparison: ' + err.message);
-      });
+        document.getElementById('interpretation').textContent = interpretation;
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      alert('Error loading comparison data: ' + error.message);
+    }
   }
 
-  function downloadReport() {
-    alert('PDF download coming soon!');
-  }
-
-  function downloadImages() {
-    alert('Image download coming soon!');
-  }
-
-  function shareResults() {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    alert('Comparison link copied to clipboard!');
-  }
+  loadData();
 </script>
 
   <%- include('partials/footer') %>

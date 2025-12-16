@@ -176,3 +176,34 @@ exports.getHistory = async (req, res) => {
     });
   }
 };
+
+// Get segmentation data for an image
+exports.getImageSegmentation = async (req, res) => {
+  try {
+    const image = await Image.findById(req.params.imageId);
+    if (!image) {
+      return res.status(404).json({
+        success: false,
+        message: 'Image not found'
+      });
+    }
+
+    const segmentation = await SegmentationResult.findOne({ imageId: image._id });
+    if (!segmentation) {
+      return res.status(404).json({
+        success: false,
+        message: 'No segmentation data available'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: segmentation.toObject()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
