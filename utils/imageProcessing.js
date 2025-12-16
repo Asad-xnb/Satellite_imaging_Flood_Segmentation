@@ -157,6 +157,97 @@ async function segmentFlood(imageBuffer, options = {}) {
 }
 
 /**
+ * Segment flood with custom HSV parameters (for calibration)
+ * @param {Buffer} imageBuffer - Image buffer
+ * @param {object} params - Custom parameters {hueMin, hueMax, satMin, satMax, valMin, valMax}
+ * @returns {Promise<object>} {binaryMask, maskedImage, floodPixels, totalPixels, floodPercentage}
+ */
+async function segmentFloodCustom(imageBuffer, params = {}) {
+  try {
+    const {
+      hueMin = 0.02,
+      hueMax = 0.20,
+      satMin = 0.05,
+      satMax = 1.0,
+      valMin = 0.10,
+      valMax = 0.95
+    } = params;
+
+    const metadata = await sharp(imageBuffer).metadata();
+    const { width, height, channels } = metadata;
+
+    const pixelData = await sharp(imageBuffer)
+      .raw()
+      .toBuffer();
+
+    const totalPixels = width * height;
+    let floodPixels = 0;
+    const binaryMaskData = Buffer.alloc(totalPixels);
+    const maskedImageData = Buffer.alloc(pixelData.length);
+
+    // Copy original image to masked
+    pixelData.copy(maskedImageData);
+
+    for (let i = 0; i < pixelData.length; i += channels) {
+      const r = pixelData[i];
+      const g = pixelData[i + 1];
+      const b = pixelData[i + 2];
+      const a = channels > 3 ? pixelData[i + 3] : 255;
+
+      const { h, s, v } = rgbToHsv(r, g, b);
+
+      let isWater = false;
+
+      // Custom detection using provided parameters
+      if (h >= hueMin && h <= hueMax && s >= satMin && s <= satMax && v >= valMin && v <= valMax) {
+        isWater = true;
+      }
+
+      const pixelIdx = i / channels;
+      if (isWater) {
+        floodPixels++;
+        binaryMaskData[pixelIdx] = 255; // White for water in mask
+
+        // Overlay cyan on masked image
+        maskedImageData[i] = Math.round(r * 0.3 + 0 * 0.7);
+        maskedImageData[i + 1] = Math.round(g * 0.3 + 255 * 0.7);
+        maskedImageData[i + 2] = Math.round(b * 0.3 + 255 * 0.7);
+        if (channels > 3) maskedImageData[i + 3] = a;
+      } else {
+        binaryMaskData[pixelIdx] = 0; // Black for non-water
+      }
+    }
+
+    // Create binary mask image
+    const binaryMask = await sharp(binaryMaskData, {
+      raw: { width, height, channels: 1 }
+    }).png().toBuffer();
+
+    // Create masked image
+    const maskedImage = await sharp(maskedImageData, {
+      raw: { width, height, channels }
+    }).png().toBuffer();
+
+    const floodPercentage = (floodPixels / totalPixels) * 100;
+
+    return {
+      success: true,
+      binaryMask,
+      maskedImage,
+      floodPixels,
+      totalPixels,
+      floodPercentage
+    };
+  } catch (error) {
+    console.error('Custom segmentation error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
  * Calculate flood increase percentage between two segmentations
  * Formula: (nnz(BWpost) - nnz(BWpre)) / nnz(BWpre) * 100
  * @param {number} preFloodPixels - Flood pixel count before
@@ -174,5 +265,6 @@ module.exports = {
   rgbToHsv,
   segmentFlood,
   segmentFloodAdvanced,
+  segmentFloodCustom,
   calculateFloodChange
 };

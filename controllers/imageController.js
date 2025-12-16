@@ -1,7 +1,7 @@
 const fs = require('fs').promises;
 const Image = require('../models/Image');
 const SegmentationResult = require('../models/SegmentationResult');
-const { segmentFlood } = require('../utils/imageProcessing');
+const { segmentFlood, segmentFloodCustom } = require('../utils/imageProcessing');
 const sharp = require('sharp');
 
 // Upload image
@@ -200,6 +200,68 @@ exports.getImageSegmentation = async (req, res) => {
       success: true,
       data: segmentation.toObject()
     });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Segment with custom HSV parameters (for calibration preview)
+exports.segmentPreview = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    const {
+      hueMin = 0.02,
+      hueMax = 0.20,
+      satMin = 0.05,
+      satMax = 1.0,
+      valMin = 0.10,
+      valMax = 0.95
+    } = req.body;
+
+    const imageBuffer = await fs.readFile(req.file.path);
+
+    const startTime = Date.now();
+    const result = await segmentFloodCustom(imageBuffer, {
+      hueMin: parseFloat(hueMin),
+      hueMax: parseFloat(hueMax),
+      satMin: parseFloat(satMin),
+      satMax: parseFloat(satMax),
+      valMin: parseFloat(valMin),
+      valMax: parseFloat(valMax)
+    });
+    const processingTime = Date.now() - startTime;
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Segmentation failed',
+        error: result.error
+      });
+    }
+
+    // Convert to base64 for preview
+    const maskBase64 = result.binaryMask.toString('base64');
+
+    res.json({
+      success: true,
+      mask: maskBase64,
+      waterPixels: result.floodPixels,
+      totalPixels: result.totalPixels,
+      coverage: result.floodPercentage,
+      processingTime: `${processingTime}ms`
+    });
+
+    // Clean up uploaded file
+    await fs.unlink(req.file.path).catch(() => {});
   } catch (error) {
     res.status(500).json({
       success: false,

@@ -22,4 +22,8 @@ router.get('/history', (req, res) => {
   res.render('history');
 });
 
+router.get('/calibrate', (req, res) => {
+  res.render('calibrate');
+});
+
 module.exports = router;

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Detection Calibration</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <%- include('partials/navbar') %>
+
+<div class="max-w-7xl mx-auto px-4 py-12">
+  <h1 class="text-4xl font-bold text-gray-900 mb-2">Water Detection Calibration</h1>
+  <p class="text-gray-600 mb-8">Fine-tune HSV thresholds for optimal water detection (like MATLAB)</p>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left: Controls -->
+    <div class="lg:col-span-1 space-y-6">
+      <!-- Hue Wheel -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Hue Range</h3>
+        <div class="flex justify-center mb-4">
+          <canvas id="hueWheel" width="250" height="250" class="border-2 border-gray-300 rounded-lg cursor-crosshair"></canvas>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-gray-600">Hue Min</p>
+            <p class="text-2xl font-bold text-blue-600" id="hueMinDisplay">0.02</p>
+          </div>
+          <div>
+            <p class="text-gray-600">Hue Max</p>
+            <p class="text-2xl font-bold text-blue-600" id="hueMaxDisplay">0.20</p>
+          </div>
+        </div>
+        <button id="resetHue" class="w-full mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm font-semibold">
+          Reset Hue
+        </button>
+      </div>
+
+      <!-- Saturation Slider -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Saturation Range</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm text-gray-600">Min Saturation</label>
+            <input type="range" id="satMin" min="0" max="1" step="0.01" value="0.05" class="w-full">
+            <p class="text-xl font-bold text-orange-600 mt-2" id="satMinDisplay">0.05</p>
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">Max Saturation</label>
+            <input type="range" id="satMax" min="0" max="1" step="0.01" value="1.0" class="w-full">
+            <p class="text-xl font-bold text-orange-600" id="satMaxDisplay">1.00</p>
+          </div>
+        </div>
+        <button id="resetSat" class="w-full mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm font-semibold">
+          Reset Saturation
+        </button>
+      </div>
+
+      <!-- Value Slider -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Value (Brightness) Range</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm text-gray-600">Min Value</label>
+            <input type="range" id="valMin" min="0" max="1" step="0.01" value="0.10" class="w-full">
+            <p class="text-xl font-bold text-yellow-600 mt-2" id="valMinDisplay">0.10</p>
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">Max Value</label>
+            <input type="range" id="valMax" min="0" max="1" step="0.01" value="0.95" class="w-full">
+            <p class="text-xl font-bold text-yellow-600" id="valMaxDisplay">0.95</p>
+          </div>
+        </div>
+        <button id="resetVal" class="w-full mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm font-semibold">
+          Reset Value
+        </button>
+      </div>
+
+      <!-- Preset Buttons -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Presets</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="presetMuddy" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 text-sm font-semibold">
+            Muddy
+          </button>
+          <button id="presetLight" class="px-3 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 text-sm font-semibold">
+            Light
+          </button>
+          <button id="presetDark" class="px-3 py-2 bg-amber-800 text-white rounded hover:bg-amber-900 text-sm font-semibold">
+            Dark
+          </button>
+          <button id="presetBright" class="px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm font-semibold">
+            Bright
+          </button>
+        </div>
+      </div>
+
+      <!-- Save/Load -->
+      <div class="bg-blue-50 rounded-lg p-6 border-l-4 border-blue-500">
+        <h3 class="text-lg font-bold text-gray-900 mb-3">Custom Preset</h3>
+        <button id="savePreset" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold mb-2">
+          Save as Preset
+        </button>
+        <button id="loadPreset" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold">
+          Load Preset
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Preview and Test Image -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Upload Test Image -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Test Image</h3>
+        <div id="testUploadZone" class="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50 cursor-pointer hover:border-blue-500 transition">
+          <svg class="mx-auto h-8 w-8 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8a4 4 0 01-4 4H8a4 4 0 01-4-4v-4m32-12l-3.172-3.172a4 4 0 00-5.656 0L28 12m0 0L16.828 0.828a4 4 0 00-5.656 0L8 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <p class="text-gray-600 mt-2">Drag test image or click to browse</p>
+          <input type="file" id="testFileInput" accept="image/jpeg,image/png,image/tiff" class="hidden" />
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <h3 class="text-lg font-bold text-gray-900 bg-gray-50 p-6">Live Preview</h3>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <p class="text-sm font-semibold text-gray-700 mb-2">Original</p>
+            <img id="previewOriginal" class="w-full h-64 object-cover rounded-lg bg-gray-100" />
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-gray-700 mb-2">Segmentation Mask</p>
+            <img id="previewMask" class="w-full h-64 object-cover rounded-lg bg-gray-100" />
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 border-t grid grid-cols-4 gap-4">
+          <div>
+            <p class="text-xs text-gray-600 uppercase tracking-wide">Water Pixels</p>
+            <p class="text-xl font-bold text-blue-600 mt-1" id="previewWaterPixels">-</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-600 uppercase tracking-wide">Total Pixels</p>
+            <p class="text-xl font-bold text-gray-900 mt-1" id="previewTotalPixels">-</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-600 uppercase tracking-wide">Coverage %</p>
+            <p class="text-xl font-bold text-orange-600 mt-1" id="previewCoverage">-</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-600 uppercase tracking-wide">Time (ms)</p>
+            <p class="text-xl font-bold text-gray-900 mt-1" id="previewTime">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Parameters Display -->
+      <div class="bg-gray-900 text-gray-100 rounded-lg p-6 font-mono text-sm overflow-auto">
+        <p class="text-gray-400 mb-2">Current HSV Parameters:</p>
+        <pre id="parameterDisplay">{
+  hueMin: 0.02,
+  hueMax: 0.20,
+  satMin: 0.05,
+  satMax: 1.00,
+  valMin: 0.10,
+  valMax: 0.95
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back Button -->
+  <div class="text-center mt-12 mb-8">
+    <a href="/upload" class="inline-block px-8 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
+      ← Back to Gallery
+    </a>
+  </div>
+</div>
+
+<script>
+  let hueMin = 0.02, hueMax = 0.20;
+  let satMin = 0.05, satMax = 1.0;
+  let valMin = 0.10, valMax = 0.95;
+  let testImageData = null;
+
+  // Initialize color wheel
+  const canvas = document.getElementById('hueWheel');
+  const ctx = canvas.getContext('2d');
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  const radius = 100;
+
+  function drawHueWheel() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw color wheel
+    for (let angle = 0; angle < 360; angle += 1) {
+      const rad = (angle * Math.PI) / 180;
+      const hue = angle / 360;
+      
+      ctx.fillStyle = `hsl(${angle}, 100%, 50%)`;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, rad, rad + (Math.PI / 180) * 1.2);
+      ctx.fill();
+    }
+
+    // Draw selection indicators
+    const hueMinAngle = (hueMin * 360 * Math.PI) / 180;
+    const hueMaxAngle = (hueMax * 360 * Math.PI) / 180;
+
+    // Min indicator
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(centerX + radius * Math.cos(hueMinAngle), centerY + radius * Math.sin(hueMinAngle), 8, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Max indicator
+    ctx.strokeStyle = '#1d4ed8';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(centerX + radius * Math.cos(hueMaxAngle), centerY + radius * Math.sin(hueMaxAngle), 8, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Draw arc between min and max
+    ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius - 5, hueMinAngle, hueMaxAngle);
+    ctx.stroke();
+  }
+
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left - centerX;
+    const y = e.clientY - rect.top - centerY;
+    const angle = Math.atan2(y, x) * (180 / Math.PI);
+    const normalizedAngle = (angle + 360) % 360;
+    const hue = normalizedAngle / 360;
+
+    // Toggle between min and max based on which is closer
+    const distToMin = Math.abs(hue - hueMin);
+    const distToMax = Math.abs(hue - hueMax);
+
+    if (distToMin < distToMax) {
+      hueMin = Math.max(0, Math.min(hueMax - 0.01, hue));
+    } else {
+      hueMax = Math.min(1, Math.max(hueMin + 0.01, hue));
+    }
+
+    updateDisplay();
+    drawHueWheel();
+  });
+
+  // Slider listeners
+  document.getElementById('satMin').addEventListener('input', (e) => {
+    satMin = Math.min(parseFloat(e.target.value), satMax - 0.01);
+    document.getElementById('satMin').value = satMin;
+    updateDisplay();
+    segmentTestImage();
+  });
+
+  document.getElementById('satMax').addEventListener('input', (e) => {
+    satMax = Math.max(parseFloat(e.target.value), satMin + 0.01);
+    document.getElementById('satMax').value = satMax;
+    updateDisplay();
+    segmentTestImage();
+  });
+
+  document.getElementById('valMin').addEventListener('input', (e) => {
+    valMin = Math.min(parseFloat(e.target.value), valMax - 0.01);
+    document.getElementById('valMin').value = valMin;
+    updateDisplay();
+    segmentTestImage();
+  });
+
+  document.getElementById('valMax').addEventListener('input', (e) => {
+    valMax = Math.max(parseFloat(e.target.value), valMin + 0.01);
+    document.getElementById('valMax').value = valMax;
+    updateDisplay();
+    segmentTestImage();
+  });
+
+  // Reset buttons
+  document.getElementById('resetHue').onclick = () => {
+    hueMin = 0.02; hueMax = 0.20;
+    updateDisplay();
+    drawHueWheel();
+    segmentTestImage();
+  };
+
+  document.getElementById('resetSat').onclick = () => {
+    satMin = 0.05; satMax = 1.0;
+    document.getElementById('satMin').value = satMin;
+    document.getElementById('satMax').value = satMax;
+    updateDisplay();
+    segmentTestImage();
+  };
+
+  document.getElementById('valMin').onclick = () => {
+    valMin = 0.10; valMax = 0.95;
+    document.getElementById('valMin').value = valMin;
+    document.getElementById('valMax').value = valMax;
+    updateDisplay();
+    segmentTestImage();
+  };
+
+  // Presets
+  document.getElementById('presetMuddy').onclick = () => {
+    hueMin = 0.02; hueMax = 0.20; satMin = 0.05; satMax = 1.0; valMin = 0.10; valMax = 0.95;
+    updateControls();
+  };
+
+  document.getElementById('presetLight').onclick = () => {
+    hueMin = 0.05; hueMax = 0.15; satMin = 0.12; satMax = 1.0; valMin = 0.40; valMax = 0.90;
+    updateControls();
+  };
+
+  document.getElementById('presetDark').onclick = () => {
+    hueMin = 0.0; hueMax = 0.25; satMin = 0.05; satMax = 1.0; valMin = 0.10; valMax = 0.60;
+    updateControls();
+  };
+
+  document.getElementById('presetBright').onclick = () => {
+    hueMin = 0.05; hueMax = 0.15; satMin = 0.12; satMax = 1.0; valMin = 0.50; valMax = 0.95;
+    updateControls();
+  };
+
+  function updateControls() {
+    document.getElementById('satMin').value = satMin;
+    document.getElementById('satMax').value = satMax;
+    document.getElementById('valMin').value = valMin;
+    document.getElementById('valMax').value = valMax;
+    updateDisplay();
+    drawHueWheel();
+    segmentTestImage();
+  }
+
+  function updateDisplay() {
+    document.getElementById('hueMinDisplay').textContent = hueMin.toFixed(2);
+    document.getElementById('hueMaxDisplay').textContent = hueMax.toFixed(2);
+    document.getElementById('satMinDisplay').textContent = satMin.toFixed(2);
+    document.getElementById('satMaxDisplay').textContent = satMax.toFixed(2);
+    document.getElementById('valMinDisplay').textContent = valMin.toFixed(2);
+    document.getElementById('valMaxDisplay').textContent = valMax.toFixed(2);
+    
+    document.getElementById('parameterDisplay').textContent = `{
+  hueMin: ${hueMin.toFixed(2)},
+  hueMax: ${hueMax.toFixed(2)},
+  satMin: ${satMin.toFixed(2)},
+  satMax: ${satMax.toFixed(2)},
+  valMin: ${valMin.toFixed(2)},
+  valMax: ${valMax.toFixed(2)}
+}`;
+  }
+
+  // Test image upload
+  const testUploadZone = document.getElementById('testUploadZone');
+  const testFileInput = document.getElementById('testFileInput');
+
+  testUploadZone.addEventListener('click', () => testFileInput.click());
+  testUploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    testUploadZone.classList.add('border-blue-500', 'bg-blue-100');
+  });
+  testUploadZone.addEventListener('dragleave', () => {
+    testUploadZone.classList.remove('border-blue-500', 'bg-blue-100');
+  });
+  testUploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    testUploadZone.classList.remove('border-blue-500', 'bg-blue-100');
+    handleTestFile(e.dataTransfer.files[0]);
+  });
+  testFileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleTestFile(e.target.files[0]);
+  });
+
+  function handleTestFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('previewOriginal').src = e.target.result;
+      testImageData = e.target.result;
+      segmentTestImage();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function segmentTestImage() {
+    if (!testImageData) return;
+
+    try {
+      const formData = new FormData();
+      const blob = await fetch(testImageData).then(r => r.blob());
+      formData.append('image', blob);
+      formData.append('hueMin', hueMin);
+      formData.append('hueMax', hueMax);
+      formData.append('satMin', satMin);
+      formData.append('satMax', satMax);
+      formData.append('valMin', valMin);
+      formData.append('valMax', valMax);
+
+      const response = await fetch('/api/images/segment-preview', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        document.getElementById('previewMask').src = 'data:image/png;base64,' + data.mask;
+        document.getElementById('previewWaterPixels').textContent = data.waterPixels.toLocaleString();
+        document.getElementById('previewTotalPixels').textContent = data.totalPixels.toLocaleString();
+        document.getElementById('previewCoverage').textContent = data.coverage.toFixed(2) + '%';
+        document.getElementById('previewTime').textContent = data.processingTime;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  // Initialize
+  drawHueWheel();
+  updateDisplay();
+</script>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
