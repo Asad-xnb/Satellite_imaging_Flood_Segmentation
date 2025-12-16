@@ -330,6 +330,52 @@
     updateControls();
   };
 
+  // Save/Load custom presets
+  document.getElementById('savePreset').onclick = () => {
+    const presetName = prompt('Enter preset name (e.g., "MyFlood"):', 'CustomPreset');
+    if (presetName) {
+      const preset = {
+        hueMin, hueMax, satMin, satMax, valMin, valMax
+      };
+      localStorage.setItem(`preset_${presetName}`, JSON.stringify(preset));
+      alert(`Preset "${presetName}" saved successfully!`);
+    }
+  };
+
+  document.getElementById('loadPreset').onclick = () => {
+    const presets = [];
+    for (let key in localStorage) {
+      if (key.startsWith('preset_')) {
+        presets.push(key.replace('preset_', ''));
+      }
+    }
+
+    if (presets.length === 0) {
+      alert('No custom presets found. Save one first!');
+      return;
+    }
+
+    const presetList = presets.join('\n');
+    const selected = prompt(`Available presets:\n${presetList}\n\nEnter preset name:`, presets[0]);
+    
+    if (selected) {
+      const preset = localStorage.getItem(`preset_${selected}`);
+      if (preset) {
+        const settings = JSON.parse(preset);
+        hueMin = settings.hueMin;
+        hueMax = settings.hueMax;
+        satMin = settings.satMin;
+        satMax = settings.satMax;
+        valMin = settings.valMin;
+        valMax = settings.valMax;
+        updateControls();
+        alert(`Preset "${selected}" loaded successfully!`);
+      } else {
+        alert('Preset not found!');
+      }
+    }
+  };
+
   function updateControls() {
     document.getElementById('satMin').value = satMin;
     document.getElementById('satMax').value = satMax;
