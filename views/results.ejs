@@ -87,17 +87,52 @@
 
   <!-- Action Buttons -->
   <div class="flex gap-4 justify-center">
-    <button class="px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
+    <button onclick="window.location.href='/upload'" class="px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
       Process Another Image
     </button>
-    <button class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
+    <button onclick="window.location.href='/upload'" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
       Compare with Another
     </button>
-    <button class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+    <button onclick="downloadResults()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
       Download Results
     </button>
   </div>
 </div>
+
+<script>
+  const segmentationId = new URLSearchParams(window.location.search).get('segmentationId');
+
+  if (segmentationId) {
+    fetch(`/api/images/segmentation/${segmentationId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          const result = data.data;
+          const imageId = result.imageId._id;
+          
+          document.getElementById('totalPixels').textContent = result.totalPixels.toLocaleString();
+          document.getElementById('floodPixels').textContent = result.floodPixels.toLocaleString();
+          document.getElementById('floodPercentage').textContent = result.floodPercentage.toFixed(2) + '%';
+          document.getElementById('processingTime').textContent = result.processingTime + 'ms';
+          document.getElementById('progressBar').style.width = result.floodPercentage + '%';
+          
+          // Load images
+          document.getElementById('originalImage').src = `/api/images/original/${imageId}`;
+          document.getElementById('maskImage').src = `/api/images/mask/${imageId}`;
+          document.getElementById('maskedImage').src = `/api/images/masked/${imageId}`;
+          document.getElementById('originalInfo').textContent = `${result.imageId.metadata.width}x${result.imageId.metadata.height}px`;
+        }
+      })
+      .catch(err => {
+        console.error('Error loading results:', err);
+        alert('Error loading segmentation results: ' + err.message);
+      });
+  }
+
+  function downloadResults() {
+    alert('Download functionality coming soon!');
+  }
+</script>
 
   <%- include('partials/footer') %>
 </body>

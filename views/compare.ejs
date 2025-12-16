@@ -93,17 +93,86 @@
 
   <!-- Export Buttons -->
   <div class="flex gap-4 justify-center">
-    <button class="px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
+    <button onclick="downloadReport()" class="px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
       Download Report (PDF)
     </button>
-    <button class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+    <button onclick="downloadImages()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
       Download Images
     </button>
-    <button class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
+    <button onclick="shareResults()" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
       Share Results
     </button>
   </div>
 </div>
+
+<script>
+  const comparisonId = new URLSearchParams(window.location.search).get('comparisonId');
+
+  if (comparisonId) {
+    fetch(`/api/comparisons/comparison/${comparisonId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          const comp = data.data;
+          
+          // Update statistics
+          document.getElementById('beforePixels').textContent = comp.preFloodPixels.toLocaleString();
+          const beforeCoverage = (comp.preFloodPixels / (comp.preFloodPixels + comp.postFloodPixels + 1)) * 100;
+          document.getElementById('beforeCoverage').textContent = beforeCoverage.toFixed(2);
+          
+          document.getElementById('afterPixels').textContent = comp.postFloodPixels.toLocaleString();
+          const afterCoverage = (comp.postFloodPixels / (comp.preFloodPixels + comp.postFloodPixels + 1)) * 100;
+          document.getElementById('afterCoverage').textContent = afterCoverage.toFixed(2);
+          
+          document.getElementById('changePercentage').textContent = comp.floodChangePercentage.toFixed(2) + '%';
+          document.getElementById('changeInterpretation').textContent = 
+            comp.floodChangePercentage > 0 
+              ? `Water increased by ${Math.abs(comp.floodChangePercentage).toFixed(2)}%`
+              : `Water decreased by ${Math.abs(comp.floodChangePercentage).toFixed(2)}%`;
+          
+          // Update icon color
+          const icon = document.getElementById('changeIcon');
+          if (comp.floodChangePercentage > 0) {
+            icon.classList.remove('text-green-600');
+            icon.classList.add('text-red-600');
+          } else {
+            icon.classList.remove('text-red-600');
+            icon.classList.add('text-green-600');
+          }
+          
+          // Update progress bars
+          const beforePercent = (comp.preFloodPixels / (comp.preFloodPixels + comp.postFloodPixels + 1)) * 100;
+          const afterPercent = (comp.postFloodPixels / (comp.preFloodPixels + comp.postFloodPixels + 1)) * 100;
+          document.getElementById('beforeBar').style.width = Math.min(beforePercent, 100) + '%';
+          document.getElementById('afterBar').style.width = Math.min(afterPercent, 100) + '%';
+          
+          // Load images
+          const preImageId = comp.preImageId._id;
+          const postImageId = comp.postImageId._id;
+          document.getElementById('beforeImage').src = `/api/images/masked/${preImageId}`;
+          document.getElementById('afterImage').src = `/api/images/masked/${postImageId}`;
+        }
+      })
+      .catch(err => {
+        console.error('Error loading comparison:', err);
+        alert('Error loading comparison: ' + err.message);
+      });
+  }
+
+  function downloadReport() {
+    alert('PDF download coming soon!');
+  }
+
+  function downloadImages() {
+    alert('Image download coming soon!');
+  }
+
+  function shareResults() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    alert('Comparison link copied to clipboard!');
+  }
+</script>
 
   <%- include('partials/footer') %>
 </body>

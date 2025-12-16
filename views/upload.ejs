@@ -9,40 +9,145 @@
 <body class="bg-gray-50">
   <%- include('partials/navbar') %>
 
-<div class="max-w-4xl mx-auto px-4 py-12">
-  <h1 class="text-3xl font-bold text-gray-900 mb-8">Upload Satellite Images</h1>
+<div class="max-w-7xl mx-auto px-4 py-12">
+  <h1 class="text-4xl font-bold text-gray-900 mb-2">Flood Segmentation Gallery</h1>
+  <p class="text-gray-600 mb-8">Upload satellite images, segment them, and compare flood changes</p>
 
   <!-- Upload Zone -->
-  <div id="uploadZone" class="border-2 border-dashed border-blue-300 rounded-lg p-12 text-center bg-blue-50 cursor-pointer hover:border-blue-500 transition mb-8">
+  <div id="uploadZone" class="border-2 border-dashed border-blue-300 rounded-lg p-12 text-center bg-blue-50 cursor-pointer hover:border-blue-500 transition mb-12">
     <svg class="mx-auto h-12 w-12 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
       <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8a4 4 0 01-4 4H8a4 4 0 01-4-4v-4m32-12l-3.172-3.172a4 4 0 00-5.656 0L28 12m0 0L16.828 0.828a4 4 0 00-5.656 0L8 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
     </svg>
-    <p class="text-gray-600 mt-4">Drag satellite images here or click to browse</p>
-    <p class="text-sm text-gray-500 mt-2">Supported formats: JPG, PNG, TIFF</p>
+    <p class="text-gray-600 mt-4 text-lg">Drag satellite images here or click to browse</p>
+    <p class="text-sm text-gray-500 mt-2">Supported formats: JPG, PNG, TIFF (Max 10MB)</p>
     <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/tiff" class="hidden" />
   </div>
 
-  <!-- Uploaded Images Grid -->
-  <div id="imageGrid" class="grid md:grid-cols-3 gap-6 mb-8"></div>
+  <!-- Gallery View -->
+  <div class="mb-12">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Image Gallery</h2>
+    <div id="gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Gallery items loaded here -->
+    </div>
+    <div id="emptyState" class="text-center py-12">
+      <p class="text-gray-500 text-lg">No images uploaded yet. Upload some to get started!</p>
+    </div>
+  </div>
 
-  <!-- Action Buttons -->
-  <div class="flex gap-4 justify-center">
-    <button id="segmentBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-      Segment Selected Images
-    </button>
-    <button id="compareBtn" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-      Compare Selected Images
-    </button>
+  <!-- Segmentation Results Modal -->
+  <div id="segmentationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-auto">
+    <div class="bg-white m-auto mt-12 rounded-lg shadow-xl max-w-4xl p-8 mx-4">
+      <button onclick="closeModal()" class="float-right text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Segmentation Results</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Original Image -->
+        <div>
+          <p class="font-semibold text-gray-700 mb-2">Original Image</p>
+          <img id="origImg" class="w-full h-48 object-cover rounded-lg bg-gray-100" />
+        </div>
+        <!-- Binary Mask -->
+        <div>
+          <p class="font-semibold text-gray-700 mb-2">Binary Mask</p>
+          <img id="maskImg" class="w-full h-48 object-cover rounded-lg bg-gray-100" />
+        </div>
+        <!-- Masked Result -->
+        <div>
+          <p class="font-semibold text-gray-700 mb-2">Masked Result</p>
+          <img id="maskedImg" class="w-full h-48 object-cover rounded-lg bg-gray-100" />
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="bg-gray-50 rounded-lg p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Flood Statistics</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <p class="text-sm text-gray-600">Total Pixels</p>
+            <p class="text-2xl font-bold text-gray-900" id="statTotalPixels">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600">Flood Pixels</p>
+            <p class="text-2xl font-bold text-red-600" id="statFloodPixels">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600">Flood %</p>
+            <p class="text-2xl font-bold text-orange-600" id="statFloodPercent">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600">Processing</p>
+            <p class="text-2xl font-bold text-blue-600" id="statProcessing">-</p>
+          </div>
+        </div>
+        <div class="mt-4">
+          <p class="text-sm text-gray-600 mb-2">Flood Coverage</p>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div id="statBar" class="bg-red-600 h-3 rounded-full" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="closeModal()" class="w-full px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <!-- Comparison Modal -->
+  <div id="comparisonModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-auto">
+    <div class="bg-white m-auto mt-12 rounded-lg shadow-xl max-w-6xl p-8 mx-4">
+      <button onclick="closeComparisonModal()" class="float-right text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Flood Change Analysis</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Before -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <p class="font-semibold text-gray-700 mb-2">Before Image</p>
+          <img id="compBefore" class="w-full h-40 object-cover rounded-lg bg-gray-100 mb-3" />
+          <div class="text-sm">
+            <p class="text-gray-600">Flood Pixels: <span class="font-bold" id="compBeforePixels">-</span></p>
+            <p class="text-gray-600">Coverage: <span class="font-bold" id="compBeforeCov">-</span>%</p>
+          </div>
+        </div>
+
+        <!-- Change Statistics -->
+        <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg p-6 flex flex-col justify-center items-center border-2 border-red-200">
+          <p class="text-sm text-gray-600 mb-2">Flood Change</p>
+          <p class="text-5xl font-bold text-red-600 mb-2" id="compChangePercent">+0%</p>
+          <p class="text-center text-sm text-gray-700" id="compInterpretation">Water area change</p>
+        </div>
+
+        <!-- After -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <p class="font-semibold text-gray-700 mb-2">After Image</p>
+          <img id="compAfter" class="w-full h-40 object-cover rounded-lg bg-gray-100 mb-3" />
+          <div class="text-sm">
+            <p class="text-gray-600">Flood Pixels: <span class="font-bold" id="compAfterPixels">-</span></p>
+            <p class="text-gray-600">Coverage: <span class="font-bold" id="compAfterCov">-</span>%</p>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="closeComparisonModal()" class="w-full px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
+        Close
+      </button>
+    </div>
   </div>
 </div>
 
 <script>
   const uploadZone = document.getElementById('uploadZone');
   const fileInput = document.getElementById('fileInput');
-  const imageGrid = document.getElementById('imageGrid');
-  const segmentBtn = document.getElementById('segmentBtn');
-  const compareBtn = document.getElementById('compareBtn');
-  let uploadedImages = [];
+  const gallery = document.getElementById('gallery');
+  const emptyState = document.getElementById('emptyState');
+
+  let galleryData = [];
+  let selectedImages = new Set();
+
+  // Initialize on page load
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadGallery();
+  });
 
   uploadZone.addEventListener('click', () => fileInput.click());
   uploadZone.addEventListener('dragover', (e) => {
@@ -62,51 +167,251 @@
     handleFiles(e.target.files);
   });
 
-  function handleFiles(files) {
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageData = {
-          name: file.name,
-          dataUrl: e.target.result,
-          selected: false
-        };
-        uploadedImages.push(imageData);
-        renderImages();
-      };
-      reader.readAsDataURL(file);
-    });
+  async function handleFiles(files) {
+    for (let file of files) {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await fetch('/api/images/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          loadGallery();
+        } else {
+          alert('Upload failed: ' + data.message);
+        }
+      } catch (error) {
+        alert('Upload error: ' + error.message);
+      }
+    }
   }
 
-  function renderImages() {
-    imageGrid.innerHTML = uploadedImages.map((img, idx) => `
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <img src="${img.dataUrl}" class="w-full h-32 object-cover" />
+  async function loadGallery() {
+    try {
+      const response = await fetch('/api/images/gallery/all');
+      const data = await response.json();
+
+      if (data.success) {
+        galleryData = data.data;
+        renderGallery();
+      }
+    } catch (error) {
+      console.error('Error loading gallery:', error);
+    }
+  }
+
+  function renderGallery() {
+    if (galleryData.length === 0) {
+      gallery.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    gallery.innerHTML = galleryData.map((item, idx) => `
+      <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition group">
+        <div class="relative cursor-pointer" onclick="toggleSelect('${item._id}', event)">
+          <img src="/api/images/original/${item._id}" class="w-full h-48 object-cover bg-gray-100" onerror="this.style.backgroundColor='#e5e7eb'" />
+          
+          <!-- Selection Overlay -->
+          <div class="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-10 transition"></div>
+          
+          <!-- Checkbox -->
+          <div class="absolute top-3 right-3 w-6 h-6 border-2 border-white rounded flex items-center justify-center bg-gray-800 bg-opacity-30 hover:bg-opacity-50 checkbox-item" data-id="${item._id}">
+            <svg class="w-4 h-4 text-white hidden" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+        </div>
+        
         <div class="p-4">
-          <p class="text-sm font-semibold truncate">${img.name}</p>
-          <label class="mt-3 flex items-center">
-            <input type="checkbox" ${img.selected ? 'checked' : ''} onchange="toggleImage(${idx})" class="rounded" />
-            <span class="ml-2 text-sm text-gray-600">Select</span>
-          </label>
+          <p class="font-semibold text-gray-900 truncate">${item.originalName}</p>
+          <p class="text-sm text-gray-500 mt-1">${item.metadata?.width}x${item.metadata?.height}px</p>
+          
+          <div class="flex gap-2 mt-4">
+            <button class="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700" onclick="segmentImage('${item._id}', this)">
+              Segment
+            </button>
+            <button onclick="viewSegmentation('${item._id}')" ${item.segmentation ? '' : 'disabled'} class="flex-1 px-3 py-2 ${item.segmentation ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-300 text-gray-700 opacity-50 cursor-not-allowed'} text-sm rounded">
+              View
+            </button>
+          </div>
         </div>
       </div>
     `).join('');
-    updateButtonStates();
   }
 
-  function toggleImage(idx) {
-    uploadedImages[idx].selected = !uploadedImages[idx].selected;
-    updateButtonStates();
+  function toggleSelect(imageId, event) {
+    event.stopPropagation();
+    
+    const isSelected = selectedImages.has(imageId);
+    
+    if (isSelected) {
+      selectedImages.delete(imageId);
+    } else {
+      selectedImages.add(imageId);
+    }
+    
+    // Update checkbox visual
+    const checkbox = document.querySelector(`[data-id="${imageId}"]`);
+    if (checkbox) {
+      const checkmark = checkbox.querySelector('svg');
+      if (isSelected) {
+        checkbox.classList.remove('bg-blue-500', 'border-blue-500');
+        checkmark?.classList.add('hidden');
+      } else {
+        checkbox.classList.add('bg-blue-500', 'border-blue-500');
+        checkmark?.classList.remove('hidden');
+      }
+    }
+    
+    updateCompareButton();
   }
 
-  function updateButtonStates() {
-    const selected = uploadedImages.filter(img => img.selected).length;
-    segmentBtn.disabled = selected === 0;
-    compareBtn.disabled = selected < 2;
+  function updateCompareButton() {
+    let compareBtn = document.getElementById('compareBtn');
+    if (!compareBtn) {
+      const compareDiv = document.createElement('div');
+      compareDiv.className = 'mb-6';
+      compareDiv.id = 'compareContainer';
+      const gallerySection = document.querySelector('h2');
+      if (gallerySection) {
+        gallerySection.parentNode.insertBefore(compareDiv, gallerySection);
+      }
+      compareBtn = document.createElement('button');
+      compareBtn.id = 'compareBtn';
+      compareBtn.className = 'hidden px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700';
+      compareBtn.onclick = compareSelected;
+      compareDiv.appendChild(compareBtn);
+    }
+
+    if (selectedImages.size >= 2) {
+      compareBtn.classList.remove('hidden');
+      compareBtn.textContent = 'Compare ' + selectedImages.size + ' Selected Images';
+    } else {
+      compareBtn.classList.add('hidden');
+    }
+  }
+
+  async function segmentImage(imageId, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+
+    try {
+      const response = await fetch(`/api/images/segment/${imageId}`, {
+        method: 'POST'
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        await loadGallery();
+        viewSegmentation(imageId);
+      } else {
+        alert('Segmentation failed: ' + data.message);
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Segment';
+    }
+  }
+
+  async function viewSegmentation(imageId) {
+    try {
+      const item = galleryData.find(i => i._id === imageId);
+      if (!item || !item.segmentation) {
+        alert('No segmentation data available');
+        return;
+      }
+
+      const seg = item.segmentation;
+      
+      document.getElementById('origImg').src = `/api/images/original/${imageId}`;
+      document.getElementById('maskImg').src = `/api/images/mask/${imageId}`;
+      document.getElementById('maskedImg').src = `/api/images/masked/${imageId}`;
+      
+      document.getElementById('statTotalPixels').textContent = seg.totalPixels.toLocaleString();
+      document.getElementById('statFloodPixels').textContent = seg.floodPixels.toLocaleString();
+      document.getElementById('statFloodPercent').textContent = seg.floodPercentage.toFixed(2) + '%';
+      document.getElementById('statProcessing').textContent = seg.processingTime + 'ms';
+      document.getElementById('statBar').style.width = seg.floodPercentage + '%';
+
+      document.getElementById('segmentationModal').classList.remove('hidden');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('segmentationModal').classList.add('hidden');
+  }
+
+  function closeComparisonModal() {
+    document.getElementById('comparisonModal').classList.add('hidden');
+  }
+
+  async function compareSelected() {
+    if (selectedImages.size < 2) {
+      alert('Please select at least 2 images');
+      return;
+    }
+
+    const ids = Array.from(selectedImages);
+    const preId = ids[0];
+    const postId = ids[1];
+
+    try {
+      // Segment both if needed
+      const preItem = galleryData.find(i => i._id === preId);
+      const postItem = galleryData.find(i => i._id === postId);
+
+      if (!preItem.segmentation) {
+        await fetch(`/api/images/segment/${preId}`, { method: 'POST' });
+      }
+      if (!postItem.segmentation) {
+        await fetch(`/api/images/segment/${postId}`, { method: 'POST' });
+      }
+
+      // Reload to get segmentation data
+      await loadGallery();
+
+      const preSegId = preItem.segmentation?._id || (await fetch(`/api/images/segment/${preId}`, { method: 'POST' }).then(r => r.json())).result.segmentationId;
+      const postSegId = postItem.segmentation?._id || (await fetch(`/api/images/segment/${postId}`, { method: 'POST' }).then(r => r.json())).result.segmentationId;
+
+      const compareResponse = await fetch('/api/comparisons/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preSegmentationId: preSegId,
+          postSegmentationId: postSegId
+        })
+      });
+
+      const compareData = await compareResponse.json();
+      if (compareData.success) {
+        const comp = compareData.result;
+        
+        document.getElementById('compBefore').src = `/api/images/original/${preId}`;
+        document.getElementById('compAfter').src = `/api/images/original/${postId}`;
+        
+        document.getElementById('compBeforePixels').textContent = comp.preImage.floodPixels.toLocaleString();
+        document.getElementById('compBeforeCov').textContent = comp.preImage.floodPercentage;
+        
+        document.getElementById('compAfterPixels').textContent = comp.postImage.floodPixels.toLocaleString();
+        document.getElementById('compAfterCov').textContent = comp.postImage.floodPercentage;
+        
+        document.getElementById('compChangePercent').textContent = (comp.floodChangePercentage > 0 ? '+' : '') + comp.floodChangePercentage;
+        document.getElementById('compInterpretation').textContent = comp.interpretation;
+
+        document.getElementById('comparisonModal').classList.remove('hidden');
+      }
+    } catch (error) {
+      alert('Comparison error: ' + error.message);
+    }
   }
 </script>
-</div>
-
-  <%- include('partials/footer') %>
-</body>
-</html>
