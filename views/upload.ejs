@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Satellite Images</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <%- include('partials/navbar') %>
+
+<div class="max-w-4xl mx-auto px-4 py-12">
+  <h1 class="text-3xl font-bold text-gray-900 mb-8">Upload Satellite Images</h1>
+
+  <!-- Upload Zone -->
+  <div id="uploadZone" class="border-2 border-dashed border-blue-300 rounded-lg p-12 text-center bg-blue-50 cursor-pointer hover:border-blue-500 transition mb-8">
+    <svg class="mx-auto h-12 w-12 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8a4 4 0 01-4 4H8a4 4 0 01-4-4v-4m32-12l-3.172-3.172a4 4 0 00-5.656 0L28 12m0 0L16.828 0.828a4 4 0 00-5.656 0L8 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <p class="text-gray-600 mt-4">Drag satellite images here or click to browse</p>
+    <p class="text-sm text-gray-500 mt-2">Supported formats: JPG, PNG, TIFF</p>
+    <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/tiff" class="hidden" />
+  </div>
+
+  <!-- Uploaded Images Grid -->
+  <div id="imageGrid" class="grid md:grid-cols-3 gap-6 mb-8"></div>
+
+  <!-- Action Buttons -->
+  <div class="flex gap-4 justify-center">
+    <button id="segmentBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+      Segment Selected Images
+    </button>
+    <button id="compareBtn" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+      Compare Selected Images
+    </button>
+  </div>
+</div>
+
+<script>
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput = document.getElementById('fileInput');
+  const imageGrid = document.getElementById('imageGrid');
+  const segmentBtn = document.getElementById('segmentBtn');
+  const compareBtn = document.getElementById('compareBtn');
+  let uploadedImages = [];
+
+  uploadZone.addEventListener('click', () => fileInput.click());
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('border-blue-500', 'bg-blue-100');
+  });
+  uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('border-blue-500', 'bg-blue-100');
+  });
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('border-blue-500', 'bg-blue-100');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+  });
+
+  function handleFiles(files) {
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageData = {
+          name: file.name,
+          dataUrl: e.target.result,
+          selected: false
+        };
+        uploadedImages.push(imageData);
+        renderImages();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderImages() {
+    imageGrid.innerHTML = uploadedImages.map((img, idx) => `
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <img src="${img.dataUrl}" class="w-full h-32 object-cover" />
+        <div class="p-4">
+          <p class="text-sm font-semibold truncate">${img.name}</p>
+          <label class="mt-3 flex items-center">
+            <input type="checkbox" ${img.selected ? 'checked' : ''} onchange="toggleImage(${idx})" class="rounded" />
+            <span class="ml-2 text-sm text-gray-600">Select</span>
+          </label>
+        </div>
+      </div>
+    `).join('');
+    updateButtonStates();
+  }
+
+  function toggleImage(idx) {
+    uploadedImages[idx].selected = !uploadedImages[idx].selected;
+    updateButtonStates();
+  }
+
+  function updateButtonStates() {
+    const selected = uploadedImages.filter(img => img.selected).length;
+    segmentBtn.disabled = selected === 0;
+    compareBtn.disabled = selected < 2;
+  }
+</script>
+</div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

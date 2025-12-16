@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite Flood Segmentation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <%- include('partials/navbar') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="text-center mb-12">
+    <h1 class="text-4xl font-bold text-gray-900 mb-4">Satellite Flood Segmentation</h1>
+    <p class="text-xl text-gray-600">Analyze satellite imagery to detect and quantify flood areas</p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-bold text-blue-600 mb-2">📤</h2>
+      <h3 class="text-lg font-semibold mb-2">Upload Images</h3>
+      <p class="text-gray-600 mb-4">Upload satellite images for flood detection analysis</p>
+      <a href="/upload" class="text-blue-600 hover:text-blue-800 font-semibold">Get Started →</a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-bold text-green-600 mb-2">🔍</h2>
+      <h3 class="text-lg font-semibold mb-2">Analyze</h3>
+      <p class="text-gray-600 mb-4">Generate flood detection masks and get detailed statistics</p>
+      <a href="/upload" class="text-blue-600 hover:text-blue-800 font-semibold">Learn More →</a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-bold text-red-600 mb-2">📊</h2>
+      <h3 class="text-lg font-semibold mb-2">Compare</h3>
+      <p class="text-gray-600 mb-4">Compare multiple images to track flood changes over time</p>
+      <a href="/compare" class="text-blue-600 hover:text-blue-800 font-semibold">Compare Now →</a>
+    </div>
+  </div>
+</div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

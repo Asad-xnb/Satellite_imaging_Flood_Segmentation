@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Segmentation Results</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <%- include('partials/navbar') %>
+
+<div class="max-w-6xl mx-auto px-4 py-12">
+  <h1 class="text-3xl font-bold text-gray-900 mb-8">Segmentation Results</h1>
+
+  <!-- Results Grid -->
+  <div class="grid md:grid-cols-3 gap-6 mb-8">
+    <!-- Original Image -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="relative">
+        <img id="originalImage" src="/placeholder.jpg" class="w-full h-64 object-cover bg-gray-100" />
+        <button class="absolute top-2 right-2 bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        </button>
+      </div>
+      <div class="p-4">
+        <h3 class="font-semibold text-gray-900">Original Image</h3>
+        <p class="text-sm text-gray-600 mt-1" id="originalInfo"></p>
+      </div>
+    </div>
+
+    <!-- Binary Mask -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="relative">
+        <img id="maskImage" src="/placeholder.jpg" class="w-full h-64 object-cover bg-gray-100" />
+        <button class="absolute top-2 right-2 bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        </button>
+      </div>
+      <div class="p-4">
+        <h3 class="font-semibold text-gray-900">Binary Mask</h3>
+        <p class="text-sm text-gray-600 mt-1">Flood detection mask</p>
+      </div>
+    </div>
+
+    <!-- Masked Result -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="relative">
+        <img id="maskedImage" src="/placeholder.jpg" class="w-full h-64 object-cover bg-gray-100" />
+        <button class="absolute top-2 right-2 bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        </button>
+      </div>
+      <div class="p-4">
+        <h3 class="font-semibold text-gray-900">Masked Result</h3>
+        <p class="text-sm text-gray-600 mt-1">Flood areas highlighted</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Card -->
+  <div class="bg-white rounded-lg shadow p-8 mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Flood Statistics</h2>
+    <div class="grid md:grid-cols-4 gap-6">
+      <div>
+        <p class="text-sm text-gray-600">Total Pixels</p>
+        <p class="text-3xl font-bold text-gray-900" id="totalPixels">-</p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-600">Flood Pixels</p>
+        <p class="text-3xl font-bold text-red-600" id="floodPixels">-</p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-600">Flood Percentage</p>
+        <p class="text-3xl font-bold text-orange-600" id="floodPercentage">-</p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-600">Processing Time</p>
+        <p class="text-3xl font-bold text-blue-600" id="processingTime">-</p>
+      </div>
+    </div>
+    <div class="mt-6">
+      <div class="w-full bg-gray-200 rounded-full h-3">
+        <div id="progressBar" class="bg-red-600 h-3 rounded-full" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex gap-4 justify-center">
+    <button class="px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
+      Process Another Image
+    </button>
+    <button class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
+      Compare with Another
+    </button>
+    <button class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+      Download Results
+    </button>
+  </div>
+</div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

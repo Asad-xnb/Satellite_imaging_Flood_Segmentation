@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analysis History</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <%- include('partials/navbar') %>
+
+<div class="max-w-7xl mx-auto px-4 py-12">
+  <h1 class="text-3xl font-bold text-gray-900 mb-8">Analysis History</h1>
+
+  <!-- Summary Stats -->
+  <div class="grid md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+      <p class="text-sm text-gray-600">Total Analyses</p>
+      <p class="text-3xl font-bold text-blue-600">0</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <p class="text-sm text-gray-600">Average Increase</p>
+      <p class="text-3xl font-bold text-red-600">0%</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <p class="text-sm text-gray-600">Latest Analysis</p>
+      <p class="text-3xl font-bold text-gray-900">--</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <p class="text-sm text-gray-600">Images Processed</p>
+      <p class="text-3xl font-bold text-green-600">0</p>
+    </div>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <div class="flex gap-4">
+      <input type="text" placeholder="Search analyses..." class="flex-1 border border-gray-300 rounded-lg px-4 py-2" />
+      <input type="date" class="border border-gray-300 rounded-lg px-4 py-2" />
+      <button class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">Search</button>
+    </div>
+  </div>
+
+  <!-- Results Table -->
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Before/After</th>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Change</th>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="historyTable" class="divide-y divide-gray-200">
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4 text-sm text-gray-900">Dec 16, 2025</td>
+          <td class="px-6 py-4 text-sm">
+            <img src="/placeholder.jpg" class="w-8 h-8 rounded" />
+          </td>
+          <td class="px-6 py-4">
+            <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">+45.2%</span>
+          </td>
+          <td class="px-6 py-4">
+            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Completed</span>
+          </td>
+          <td class="px-6 py-4">
+            <button class="text-blue-600 hover:text-blue-800 text-sm font-semibold">View</button>
+            <button class="text-red-600 hover:text-red-800 text-sm font-semibold ml-2">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex justify-center gap-2 mt-6">
+    <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Previous</button>
+    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg">1</button>
+    <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">2</button>
+    <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Next</button>
+  </div>
+
+  <!-- FAB -->
+  <a href="/upload" class="fixed bottom-8 right-8 w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 text-2xl">
+    +
+  </a>
+</div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

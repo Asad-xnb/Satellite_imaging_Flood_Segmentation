@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flood Change Analysis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <%- include('partials/navbar') %>
+
+<div class="max-w-6xl mx-auto px-4 py-12">
+  <h1 class="text-3xl font-bold text-gray-900 mb-8">Flood Change Analysis</h1>
+
+  <!-- Date Range Selector -->
+  <div class="bg-white rounded-lg shadow p-6 mb-8">
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Before Image</label>
+        <select id="preImage" class="w-full border border-gray-300 rounded-lg p-2">
+          <option value="">Select before image...</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">After Image</label>
+        <select id="postImage" class="w-full border border-gray-300 rounded-lg p-2">
+          <option value="">Select after image...</option>
+        </select>
+      </div>
+    </div>
+    <button class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+      Compare Images
+    </button>
+  </div>
+
+  <!-- Comparison Results -->
+  <div class="grid md:grid-cols-3 gap-6 mb-8">
+    <!-- Before -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <img id="beforeImage" src="/placeholder.jpg" class="w-full h-64 object-cover bg-gray-100" />
+      <div class="p-4">
+        <h3 class="font-semibold text-gray-900">Before</h3>
+        <div class="mt-3 space-y-2">
+          <p class="text-sm text-gray-600">Flood Pixels: <span id="beforePixels" class="font-semibold">-</span></p>
+          <p class="text-sm text-gray-600">Coverage: <span id="beforeCoverage" class="font-semibold">-</span>%</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Center -->
+    <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg shadow p-6 flex flex-col justify-center items-center">
+      <p class="text-sm text-gray-600 mb-4">Flood Change</p>
+      <p id="changePercentage" class="text-6xl font-bold text-red-600 mb-2">+150%</p>
+      <p id="changeInterpretation" class="text-center text-gray-700 text-sm">Water increased by 150%</p>
+      <div class="mt-6 flex items-center gap-2">
+        <svg id="changeIcon" class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m0 0l4 4m10-4v12m0 0l4-4m0 0l-4-4"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- After -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <img id="afterImage" src="/placeholder.jpg" class="w-full h-64 object-cover bg-gray-100" />
+      <div class="p-4">
+        <h3 class="font-semibold text-gray-900">After</h3>
+        <div class="mt-3 space-y-2">
+          <p class="text-sm text-gray-600">Flood Pixels: <span id="afterPixels" class="font-semibold">-</span></p>
+          <p class="text-sm text-gray-600">Coverage: <span id="afterCoverage" class="font-semibold">-</span>%</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart/Statistics -->
+  <div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">Detailed Comparison</h2>
+    <div class="space-y-4">
+      <div>
+        <p class="text-sm text-gray-600 mb-2">Before Image Coverage</p>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div id="beforeBar" class="bg-blue-600 h-3 rounded-full" style="width: 0%"></div>
+        </div>
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 mb-2">After Image Coverage</p>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div id="afterBar" class="bg-red-600 h-3 rounded-full" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Buttons -->
+  <div class="flex gap-4 justify-center">
+    <button class="px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">
+      Download Report (PDF)
+    </button>
+    <button class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+      Download Images
+    </button>
+    <button class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
+      Share Results
+    </button>
+  </div>
+</div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
