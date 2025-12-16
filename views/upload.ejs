@@ -273,27 +273,44 @@
   }
 
   function updateCompareButton() {
-    let compareBtn = document.getElementById('compareBtn');
-    if (!compareBtn) {
-      const compareDiv = document.createElement('div');
-      compareDiv.className = 'mb-6';
-      compareDiv.id = 'compareContainer';
+    let compareContainer = document.getElementById('compareContainer');
+    if (!compareContainer) {
+      compareContainer = document.createElement('div');
+      compareContainer.className = 'mb-6 flex gap-3';
+      compareContainer.id = 'compareContainer';
       const gallerySection = document.querySelector('h2');
       if (gallerySection) {
-        gallerySection.parentNode.insertBefore(compareDiv, gallerySection);
+        gallerySection.parentNode.insertBefore(compareContainer, gallerySection);
       }
-      compareBtn = document.createElement('button');
+      
+      const compareBtn = document.createElement('button');
       compareBtn.id = 'compareBtn';
-      compareBtn.className = 'hidden px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700';
+      compareBtn.className = 'hidden px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition';
       compareBtn.onclick = compareSelected;
-      compareDiv.appendChild(compareBtn);
+      compareContainer.appendChild(compareBtn);
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.id = 'deleteBtn';
+      deleteBtn.className = 'hidden px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition';
+      deleteBtn.onclick = deleteSelected;
+      compareContainer.appendChild(deleteBtn);
     }
+
+    const compareBtn = document.getElementById('compareBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
 
     if (selectedImages.size >= 2) {
       compareBtn.classList.remove('hidden');
-      compareBtn.textContent = 'Compare ' + selectedImages.size + ' Selected Images';
+      compareBtn.textContent = 'Compare ' + selectedImages.size + ' Selected';
     } else {
       compareBtn.classList.add('hidden');
+    }
+    
+    if (selectedImages.size >= 1) {
+      deleteBtn.classList.remove('hidden');
+      deleteBtn.textContent = 'Delete ' + selectedImages.size + ' Selected';
+    } else {
+      deleteBtn.classList.add('hidden');
     }
   }
 
@@ -412,6 +429,44 @@
       }
     } catch (error) {
       alert('Comparison error: ' + error.message);
+    }
+  }
+
+  async function deleteSelected() {
+    if (selectedImages.size === 0) {
+      alert('No images selected');
+      return;
+    }
+
+    const confirmed = confirm(`Delete ${selectedImages.size} selected image(s)? This cannot be undone.`);
+    if (!confirmed) return;
+
+    const deleteBtn = document.getElementById('deleteBtn');
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = 'Deleting...';
+
+    try {
+      const ids = Array.from(selectedImages);
+      
+      for (const id of ids) {
+        const response = await fetch(`/api/images/delete/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to delete image ${id}`);
+        }
+      }
+
+      selectedImages.clear();
+      await loadGallery();
+      updateCompareButton();
+      alert(`Successfully deleted ${ids.length} image(s)`);
+    } catch (error) {
+      alert('Error deleting images: ' + error.message);
+    } finally {
+      deleteBtn.disabled = false;
+      updateCompareButton();
     }
   }
 </script>

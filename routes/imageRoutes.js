@@ -66,4 +66,40 @@ router.get('/gallery/all', async (req, res) => {
   }
 });
 
+// Delete an image and its segmentation data
+router.delete('/delete/:imageId', async (req, res) => {
+  try {
+    const image = await Image.findById(req.params.imageId);
+    if (!image) {
+      return res.status(404).json({ success: false, message: 'Image not found' });
+    }
+
+    // Delete image files
+    try {
+      await fs.unlink(`./uploads/${image.filename}`);
+      await fs.unlink(`./uploads/mask-${image._id}.png`);
+      await fs.unlink(`./uploads/masked-${image._id}.png`);
+    } catch (e) {
+      // Files might not exist, that's ok
+    }
+
+    // Delete from database
+    const SegmentationResult = require('../models/SegmentationResult');
+    const Comparison = require('../models/Comparison');
+    
+    await SegmentationResult.deleteMany({ imageId: image._id });
+    await Comparison.deleteMany({ 
+      $or: [
+        { preSegmentationId: { $exists: true } },
+        { postSegmentationId: { $exists: true } }
+      ]
+    });
+    await Image.findByIdAndDelete(req.params.imageId);
+
+    res.json({ success: true, message: 'Image deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;
